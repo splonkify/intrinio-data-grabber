@@ -31,6 +31,7 @@ public class Main {
             CorpusRecord corpusRecord = corpusRecordProvider.get();
             Corpus corpus = corpusProvider.get();
 
+            corpus.addFields(TagName.BASICEPS, TagName.DELTAINCOME, TagName.LONGTERMDEBT);
             standardizedFinancials.statements(corpusRecord);
             String fileName = "/Users/kgiles/R-projects/intrinio/corpus.csv";
             FileWriter fileWriter = new FileWriter(fileName);

@@ -8,17 +8,9 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.picarious.TagName.BASICEPS;
-import static com.picarious.TagName.DELTAINCOME;
-import static com.picarious.TagName.LONGTERMDEBT;
-
-/**
- * Created by kgiles on 9/4/16.
- */
 @Service
 @Scope("prototype")
 public class Corpus {
@@ -28,7 +20,7 @@ public class Corpus {
         fields = new ArrayList<>();
     }
 
-    public void addFields(String ... newFields) {
+    public void addFields(String... newFields) {
         fields.addAll(Arrays.stream(newFields).collect(Collectors.toList()));
     }
 
@@ -37,11 +29,10 @@ public class Corpus {
     }
 
     public void writeHeader(OutputStreamWriter writer) throws IOException {
-        StringJoiner stringJoiner = new StringJoiner(",", "", "\n");
-        stringJoiner.add(BASICEPS);
-        stringJoiner.add(LONGTERMDEBT);
-        stringJoiner.add(DELTAINCOME);
-
-        writer.write(stringJoiner.toString());
+        if (fields.isEmpty()) {
+            throw new RuntimeException("No fields specified");
+        }
+        String header = fieldStream().collect(Collectors.joining(",")) + "\n";
+        writer.write(header);
     }
 }
