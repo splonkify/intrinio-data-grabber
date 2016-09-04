@@ -1,6 +1,6 @@
 package com.picarious;
 
-import com.picarious.intrinio.Data;
+import com.picarious.intrinio.FinancialData;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +20,8 @@ public class CorpusRecord {
         financialsMap = new HashMap<>();
     }
 
-    public void addFinancialData(Data data) {
-        Map<String, BigDecimal> dataMap = data.toMap();
+    public void addFinancialData(FinancialData financialData) {
+        Map<String, BigDecimal> dataMap = financialData.toMap();
         financialsMap.putAll(dataMap);
     }
 

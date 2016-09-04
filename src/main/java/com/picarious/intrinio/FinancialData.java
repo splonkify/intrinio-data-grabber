@@ -8,22 +8,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Data {
-    private List<Datum> data;
+public class FinancialData {
+    private List<FinancialDatum> data;
 
-    public Data() {
+    public FinancialData() {
     }
 
-    public List<Datum> getData() {
+    public List<FinancialDatum> getData() {
         return data;
     }
 
-    public void setData(List<Datum> data) {
+    public void setData(List<FinancialDatum> data) {
         this.data = data;
     }
 
     public Map<String, BigDecimal> toMap() {
-        return data.stream().collect(Collectors.toMap(Datum::getTag, Datum::getValue));
+        return data.stream().collect(Collectors.toMap(FinancialDatum::getTag, FinancialDatum::getValue));
     }
 
     public String toString() {
