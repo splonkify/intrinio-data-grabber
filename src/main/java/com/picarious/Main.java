@@ -19,22 +19,18 @@ public class Main {
 
     @Autowired
     Provider<Corpus> corpusProvider;
-    @Autowired
-    Provider<CorpusRecord> corpusRecordProvider;
 
     public static void main(String[] args) {
         SpringApplication.run(Main.class);
     }
 
     @Bean
-    public CommandLineRunner run(StandardizedFinancials standardizedFinancials) throws Exception {
+    public CommandLineRunner run(CorpusRecordBuilder corpusRecordBuilder) throws Exception {
         return args -> {
-            CorpusRecord corpusRecord = corpusRecordProvider.get();
             Corpus corpus = corpusProvider.get();
-
+            CorpusRecord corpusRecord = corpusRecordBuilder.build();
             corpus.addFields(TagName.BASICEPS, TagName.DELTAINCOME, TagName.LONGTERMDEBT);
             corpus.addRecord(corpusRecord);
-            standardizedFinancials.statements(corpusRecord);
             String fileName = "/Users/kgiles/R-projects/intrinio/corpus.csv";
             FileWriter fileWriter = new FileWriter(fileName);
             corpus.writeHeader(fileWriter);

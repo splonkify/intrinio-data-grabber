@@ -5,16 +5,26 @@ import com.picarious.intrinio.FinancialData;
 import com.picarious.intrinio.JsonTestData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.inject.Provider;
 import java.io.IOException;
 
 @Service
-public class StandardizedFinancials {
-    private static final Logger log = LoggerFactory.getLogger(StandardizedFinancials.class);
+public class CorpusRecordBuilder {
+    private static final Logger log = LoggerFactory.getLogger(CorpusRecordBuilder.class);
 
-    public void statements(CorpusRecord corpusRecord) {
+    private final Provider<CorpusRecord> corpusRecordProvider;
+
+    @Autowired
+    public CorpusRecordBuilder(Provider<CorpusRecord> corpusRecordProvider) {
+        this.corpusRecordProvider = corpusRecordProvider;
+    }
+
+    public CorpusRecord build() {
         ObjectMapper mapper = new ObjectMapper();
+        CorpusRecord corpusRecord = corpusRecordProvider.get();
         try {
             corpusRecord.addFinancialData(mapper.readValue(scrubJson(JsonTestData.EBAY_BALANCE_SHEET), FinancialData.class));
             corpusRecord.addFinancialData(mapper.readValue(scrubJson(JsonTestData.EBAY_CASH_FLOW_STATEMENT), FinancialData.class));
@@ -22,10 +32,9 @@ public class StandardizedFinancials {
             corpusRecord.addFinancialData(mapper.readValue(scrubJson(JsonTestData.EBAY_CALCULATIONS), FinancialData.class));
         } catch (IOException e) {
             log.error("Could not deserialize json", e);
-            return;
+            throw new RuntimeException(e);
         }
-        log.info(corpusRecord.toString());
-
+        return corpusRecord;
     }
 
     private String scrubJson(String json) {
