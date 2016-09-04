@@ -32,11 +32,12 @@ public class Main {
             Corpus corpus = corpusProvider.get();
 
             corpus.addFields(TagName.BASICEPS, TagName.DELTAINCOME, TagName.LONGTERMDEBT);
+            corpus.addRecord(corpusRecord);
             standardizedFinancials.statements(corpusRecord);
             String fileName = "/Users/kgiles/R-projects/intrinio/corpus.csv";
             FileWriter fileWriter = new FileWriter(fileName);
             corpus.writeHeader(fileWriter);
-            corpusRecord.toFile(fileWriter);
+            corpus.writeRecords(fileWriter);
             fileWriter.close();
         };
     }
