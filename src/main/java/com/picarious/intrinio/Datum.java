@@ -1,12 +1,9 @@
-package com.picarious;
+package com.picarious.intrinio;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 
-/**
- * Created by kgiles on 9/3/16.
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Datum {
     private String tag;

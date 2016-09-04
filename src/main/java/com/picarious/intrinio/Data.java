@@ -1,4 +1,4 @@
-package com.picarious;
+package com.picarious.intrinio;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -6,10 +6,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-/**
- * Created by kgiles on 9/3/16.
- */
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Data {

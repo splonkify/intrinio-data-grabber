@@ -1,5 +1,6 @@
 package com.picarious;
 
+import com.picarious.intrinio.Data;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 

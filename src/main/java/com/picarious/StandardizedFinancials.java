@@ -1,15 +1,14 @@
 package com.picarious;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.picarious.intrinio.Data;
+import com.picarious.intrinio.JsonTestData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-/**
- * Created by kgiles on 9/4/16.
- */
 @Service
 public class StandardizedFinancials {
     private static final Logger log = LoggerFactory.getLogger(StandardizedFinancials.class);
