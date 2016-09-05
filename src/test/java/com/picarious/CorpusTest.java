@@ -26,8 +26,8 @@ public class CorpusTest {
 
     @Before
     public void setUp() {
-        systemUnderTest = new Corpus();
         MockitoAnnotations.initMocks(this);
+        systemUnderTest = new Corpus();
     }
 
     @Test

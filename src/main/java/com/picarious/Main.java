@@ -4,6 +4,7 @@ import com.picarious.intrinio.TagName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,6 +21,9 @@ public class Main {
     @Autowired
     Provider<Corpus> corpusProvider;
 
+    @Value("${corpus.pathAndFile}")
+    String corpusPathAndFile;
+
     public static void main(String[] args) {
         SpringApplication.run(Main.class);
     }
@@ -29,7 +33,7 @@ public class Main {
         return args -> {
             Corpus corpus = corpusProvider.get();
             CorpusRecord corpusRecord = corpusRecordBuilder.build();
-            corpus.addFields(TagName.BASICEPS, TagName.DELTAINCOME, TagName.LONGTERMDEBT);
+            corpus.addFields(TagName.BASICEPS, TagName.DELTAOPERATINGCAPITAL, TagName.LONGTERMDEBT);
             corpus.addRecord(corpusRecord);
             String fileName = "/Users/kgiles/R-projects/intrinio/corpus.csv";
             FileWriter fileWriter = new FileWriter(fileName);
