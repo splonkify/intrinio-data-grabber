@@ -1,6 +1,7 @@
 package com.picarious;
 
 import com.picarious.intrinio.FinancialData;
+import com.picarious.intrinio.SecurityData;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,9 @@ public class CorpusRecord {
     }
 
     public void addFinancialData(FinancialData financialData) {
+        if (financialData.getData() == null) {
+            return;
+        }
         Map<String, BigDecimal> dataMap = financialData.toMap();
         financialsMap.putAll(dataMap);
     }
@@ -35,5 +39,9 @@ public class CorpusRecord {
 
     public String getValue(String key) {
         return valueFromFinancialMap(key);
+    }
+
+    public void addSecurities(SecurityData securityData) {
+
     }
 }

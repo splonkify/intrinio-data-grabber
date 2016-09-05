@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Provider;
 import java.io.FileWriter;
@@ -29,14 +31,17 @@ public class Main {
     }
 
     @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+        return restTemplateBuilder.build();
+    }
+
+    @Bean
     public CommandLineRunner run(CorpusRecordBuilder corpusRecordBuilder) throws Exception {
         return args -> {
             Corpus corpus = corpusProvider.get();
-            CorpusRecord corpusRecord = corpusRecordBuilder.build();
+            corpusRecordBuilder.build(corpus);
             corpus.addFields(TagName.BASICEPS, TagName.DELTAOPERATINGCAPITAL, TagName.LONGTERMDEBT);
-            corpus.addRecord(corpusRecord);
-            String fileName = "/Users/kgiles/R-projects/intrinio/corpus.csv";
-            FileWriter fileWriter = new FileWriter(fileName);
+            FileWriter fileWriter = new FileWriter(corpusPathAndFile);
             corpus.writeHeader(fileWriter);
             corpus.writeRecords(fileWriter);
             fileWriter.close();
