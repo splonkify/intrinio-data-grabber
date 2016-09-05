@@ -5,15 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SecurityData {
-    private List<SecurityDatum> data;
+public class FundamentalsData {
+    private List<FundamentalsDatum> data;
 
-    public List<SecurityDatum> getData() {
+    public List<FundamentalsDatum> getData() {
         return data;
     }
 
-    public void setData(List<SecurityDatum> data) {
+    public void setData(List<FundamentalsDatum> data) {
         this.data = data;
     }
-
 }
