@@ -39,7 +39,7 @@ public class Corpus {
         }
         String header = fieldStream().collect(Collectors.joining(",")) + "\n";
         try {
-            writer.write(header);
+            writer.write("classification," + header);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -55,7 +55,7 @@ public class Corpus {
         records.stream().forEach(
                 corpusRecord -> {
                     try {
-                        writer.write(fieldStream().map(field -> corpusRecord.getValue(field)).collect(Collectors.joining(",")) + "\n");
+                        writer.write(corpusRecord.getClassification() + "," + fieldStream().map(field -> corpusRecord.getValue(field)).collect(Collectors.joining(",")) + "\n");
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

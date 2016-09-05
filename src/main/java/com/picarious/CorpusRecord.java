@@ -16,6 +16,7 @@ public class CorpusRecord {
     public static final String MISSING = "Missing";
 
     private final Map<String, BigDecimal> financialsMap;
+    private String classification;
 
     public CorpusRecord() {
         financialsMap = new HashMap<>();
@@ -41,7 +42,11 @@ public class CorpusRecord {
         return valueFromFinancialMap(key);
     }
 
-    public void addSecurities(SecurityData securityData) {
+    public String getClassification() {
+        return classification;
+    }
 
+    public void setClassification(String classification) {
+        this.classification = classification;
     }
 }

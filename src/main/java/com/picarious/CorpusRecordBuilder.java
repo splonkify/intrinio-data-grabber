@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Provider;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,6 +28,7 @@ public class CorpusRecordBuilder {
     private final Provider<CorpusRecord> corpusRecordProvider;
     private final FileCache fileCache;
     private final RestTemplate restTemplate;
+    private final Boolean isApiAvailable;
     private final String base64Creds;
 
     private final Map<String, String> urlMap;
@@ -37,11 +39,13 @@ public class CorpusRecordBuilder {
             FileCache fileCache,
             RestTemplate restTemplate,
             @Value("${api.username}") String username,
-            @Value("${api.password}") String password
+            @Value("${api.password}") String password,
+            @Value("${api.available}") Boolean isApiAvailable
     ) {
         this.corpusRecordProvider = corpusRecordProvider;
         this.fileCache = fileCache;
         this.restTemplate = restTemplate;
+        this.isApiAvailable = isApiAvailable;
         String plainCreds = username + ":" + password;
         base64Creds = Base64.getEncoder().encodeToString(plainCreds.getBytes());
         urlMap = new HashMap<>();
@@ -65,14 +69,39 @@ public class CorpusRecordBuilder {
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "cash_flow_statement", priceParameters.getYear(), priceParameters.getQuarter()));
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "income_statement", priceParameters.getYear(), priceParameters.getQuarter()));
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "calculations", priceParameters.getYear(), priceParameters.getQuarter()));
-                    PriceData quoteData = findData(PriceData.class, securityDatum.getTicker(), priceParameters.getStart(), priceParameters.getEnd());
-                    corpus.addRecord(corpusRecord);
+                    PriceData priceData = findData(PriceData.class, securityDatum.getTicker(), priceParameters.getStart(), priceParameters.getEnd());
+                    if (priceData != null && priceData.getData() != null && !priceData.getData().isEmpty()) {
+                        String classification = classify(priceData);
+                        corpusRecord.setClassification(classification);
+                        corpus.addRecord(corpusRecord);
+                    }
                 }
             }
         } catch (IOException e) {
             log.error("Could not deserialize json", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private String classify(PriceData priceData) {
+        String classification = "Z";
+        priceData.getData().sort(new Comparator<PriceDatum>() {
+            @Override
+            public int compare(PriceDatum o1, PriceDatum o2) {
+                return o1.getDate().compareTo(o2.getDate());
+            }
+        });
+        double firstDayOpen = priceData.getData().get(0).getOpen().doubleValue();
+        double lastDayHigh = priceData.getData().get(priceData.getData().size() - 1).getHigh().doubleValue();
+        double changeRate =  (lastDayHigh - firstDayOpen) / firstDayOpen;
+        if (Math.abs(changeRate) > 0.01) {
+            if (changeRate > 0.0) {
+                classification = "P";
+            } else {
+                classification = "N";
+            }
+        }
+        return classification;
     }
 
     private <T> T findData(Class<T> clazz, String... parameters) throws IOException {
@@ -88,6 +117,9 @@ public class CorpusRecordBuilder {
         }
         String json = fileCache.read(fileKey);
         if (json == null) {
+            if (!isApiAvailable) {
+                return null;
+            }
             HttpHeaders headers = new HttpHeaders();
             headers.add("Authorization", "Basic " + base64Creds);
             HttpEntity<String> request = new HttpEntity<>(headers);
