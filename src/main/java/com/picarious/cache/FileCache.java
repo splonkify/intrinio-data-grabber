@@ -4,11 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 @Service
 public class FileCache {
@@ -24,33 +23,32 @@ public class FileCache {
     }
 
     public String read(String key) {
-        File file =  fileHelper.openFile(cacheRoot, key, suffix);
-        if (file == null) {
+        FileReader fileReader = fileHelper.openFile(cacheRoot, key, suffix);
+        if (fileReader == null) {
             return null;
         }
-        return readLine(file);
+        return readLine(fileReader);
     }
 
     public void write(String key, String line) {
-        File file = fileHelper.createFile(cacheRoot, key, suffix);
-        writeLine(file, line);
+        FileWriter fileWriter = fileHelper.createFile(cacheRoot, key, suffix);
+        writeLine(fileWriter, line);
     }
 
-    String readLine(File file) {
-        Scanner scanner = null;
+    String readLine(FileReader fileReader) {
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
         try {
-            scanner = new Scanner(file);
-        } catch (FileNotFoundException e) {
+            String line = bufferedReader.readLine();
+            bufferedReader.close();
+            fileReader.close();
+            return line;
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        String line = scanner.nextLine();
-        scanner.close();
-        return line;
     }
 
-    void writeLine(File file, String line) {
+    void writeLine(FileWriter fileWriter, String line) {
         try {
-            FileWriter fileWriter = new FileWriter(file);
             fileWriter.write(line);
             fileWriter.close();
         } catch (IOException e) {

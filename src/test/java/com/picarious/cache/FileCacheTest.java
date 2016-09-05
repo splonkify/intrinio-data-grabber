@@ -6,7 +6,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -50,9 +51,9 @@ public class FileCacheTest {
     public void readGetsLineFromFile() {
         String key = "foo";
         String line = "this is the line";
-        File file = mock(File.class);
-        when(fileHelper.openFile(cacheRoot, key, suffix)).thenReturn(file);
-        doReturn(line).when(systemUnderTest).readLine(file);
+        FileReader fileReader = mock(FileReader.class);
+        when(fileHelper.openFile(cacheRoot, key, suffix)).thenReturn(fileReader);
+        doReturn(line).when(systemUnderTest).readLine(fileReader);
 
         String actual = systemUnderTest.read(key);
 
@@ -74,13 +75,13 @@ public class FileCacheTest {
     public void writePutsLineInFile() {
         String key = "foo";
         String line = "this is the line";
-        File file = mock(File.class);
-        when(fileHelper.createFile(cacheRoot, key, suffix)).thenReturn(file);
-        doNothing().when(systemUnderTest).writeLine(file, line);
+        FileWriter fileWriter = mock(FileWriter.class);
+        when(fileHelper.createFile(cacheRoot, key, suffix)).thenReturn(fileWriter);
+        doNothing().when(systemUnderTest).writeLine(fileWriter, line);
 
         systemUnderTest.write(key, line);
 
-        verify(systemUnderTest).writeLine(file, line);
+        verify(systemUnderTest).writeLine(fileWriter, line);
     }
 
 
