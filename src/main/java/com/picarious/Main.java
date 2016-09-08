@@ -26,6 +26,9 @@ public class Main {
     @Value("${corpus.pathAndFile}")
     String corpusPathAndFile;
 
+    @Value("${corpus.fields}")
+    String corpusFields;
+
     public static void main(String[] args) {
         SpringApplication.run(Main.class);
     }
@@ -40,7 +43,7 @@ public class Main {
         return args -> {
             Corpus corpus = corpusProvider.get();
             corpusRecordBuilder.build(corpus);
-            corpus.addFields(TagName.BASICEPS, TagName.DELTAOPERATINGCAPITAL, TagName.LONGTERMDEBT);
+            corpus.addFields(corpusFields.split(","));
             FileWriter fileWriter = new FileWriter(corpusPathAndFile);
             corpus.writeHeader(fileWriter);
             corpus.writeRecords(fileWriter);

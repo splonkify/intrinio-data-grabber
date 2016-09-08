@@ -29,6 +29,8 @@ public class CorpusRecordBuilder {
     private final FileCache fileCache;
     private final RestTemplate restTemplate;
     private final Boolean isApiAvailable;
+    private final int targetWeeks;
+    private final double threshold;
     private final String base64Creds;
 
     private final Map<String, String> urlMap;
@@ -40,16 +42,20 @@ public class CorpusRecordBuilder {
             RestTemplate restTemplate,
             @Value("${api.username}") String username,
             @Value("${api.password}") String password,
-            @Value("${api.available}") Boolean isApiAvailable
+            @Value("${api.available}") Boolean isApiAvailable,
+            @Value("${model.targetWeeks}") int targetWeeks,
+            @Value("${model.threshhold}") double threshold
     ) {
         this.corpusRecordProvider = corpusRecordProvider;
         this.fileCache = fileCache;
         this.restTemplate = restTemplate;
         this.isApiAvailable = isApiAvailable;
+        this.targetWeeks = targetWeeks;
+        this.threshold = threshold;
         String plainCreds = username + ":" + password;
         base64Creds = Base64.getEncoder().encodeToString(plainCreds.getBytes());
         urlMap = new HashMap<>();
-        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?conditions=average_daily_volume~gt~10000000");
+        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?conditions=average_daily_volume~gt~9000000");
         urlMap.put(FundamentalsData.class.getSimpleName(), "https://api.intrinio.com/fundamentals/standardized?ticker=%s&statement=balance_sheet&type=QTR");
         urlMap.put(PriceData.class.getSimpleName(), "https://api.intrinio.com/prices?ticker=%s&frequency=weekly&start_date=%s&end_date=%s");
         urlMap.put(FinancialData.class.getSimpleName(), "https://api.intrinio.com/financials/standardized?ticker=%s&statement=%s&fiscal_year=%s&fiscal_period=%s");
@@ -94,7 +100,7 @@ public class CorpusRecordBuilder {
         double firstDayOpen = priceData.getData().get(0).getOpen().doubleValue();
         double lastDayHigh = priceData.getData().get(priceData.getData().size() - 1).getHigh().doubleValue();
         double changeRate =  (lastDayHigh - firstDayOpen) / firstDayOpen;
-        if (Math.abs(changeRate) > 0.01) {
+        if (Math.abs(changeRate) > threshold) {
             if (changeRate > 0.0) {
                 classification = "P";
             } else {
@@ -136,7 +142,9 @@ public class CorpusRecordBuilder {
     }
 
     private String scrubJson(String json) {
-        return json.replace("\"value\":\"nm\"", "\"value\":0.0");
+        String scrubbed = json.replace("\"value\":\"nm\"", "\"value\":0.0");
+        scrubbed = scrubbed.replace("\"value\":NaN", "\"value\":1.0");
+        return scrubbed;
     }
 
     private class PriceParameters {
@@ -161,7 +169,7 @@ public class CorpusRecordBuilder {
                         calendar.setTime(filingDate);
                         calendar.add(Calendar.DAY_OF_YEAR, 2);
                         start = sdf.format(calendar.getTime());
-                        calendar.add(Calendar.MONTH, 1);
+                        calendar.add(Calendar.WEEK_OF_YEAR, targetWeeks);
                         end = sdf.format(calendar.getTime());
                     } catch (ParseException e) {
                         throw new RuntimeException(e);
