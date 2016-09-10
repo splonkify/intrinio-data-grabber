@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 public class Corpus {
     static final String NO_FIELDS_SPECIFIED = "No fields specified";
     static final String NO_RECORDS_FOUND = "No records found";
-    private final List<String> fields;
+    private List<String> fields;
     private final List<CorpusRecord> records;
 
     public Corpus() {
@@ -25,8 +25,8 @@ public class Corpus {
         records = new ArrayList<>();
     }
 
-    public void addFields(String... newFields) {
-        fields.addAll(Arrays.stream(newFields).collect(Collectors.toList()));
+    public void setFields(String... newFields) {
+        fields = Arrays.stream(newFields).collect(Collectors.toList());
     }
 
     public Stream<String> fieldStream() {

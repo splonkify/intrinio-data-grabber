@@ -37,7 +37,7 @@ public class CorpusTest {
     @Test
     public void writeHeaderHappyPath() throws Exception {
         OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        systemUnderTest.addFields("A", "B", "C");
+        systemUnderTest.setFields("A", "B", "C");
 
         systemUnderTest.writeHeader(writer);
 
@@ -58,7 +58,7 @@ public class CorpusTest {
         thrown.expect(RuntimeException.class);
         thrown.expectMessage(Corpus.NO_RECORDS_FOUND);
         OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        systemUnderTest.addFields("A", "B", "C");
+        systemUnderTest.setFields("A", "B", "C");
 
         systemUnderTest.writeRecords(writer);
     }
@@ -71,7 +71,7 @@ public class CorpusTest {
         when(corpusRecord.getValue("A")).thenReturn(valueA);
         when(corpusRecord.getValue("B")).thenReturn(valueB);
         OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        systemUnderTest.addFields("A", "B");
+        systemUnderTest.setFields("A", "B");
         systemUnderTest.addRecord(corpusRecord);
 
         systemUnderTest.writeRecords(writer);

@@ -2,6 +2,8 @@ package com.picarious;
 
 import com.picarious.intrinio.FinancialData;
 import com.picarious.intrinio.SecurityData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +14,9 @@ import java.util.Map;
 @Service
 @Scope("prototype")
 public class CorpusRecord {
+    private static final Logger log = LoggerFactory.getLogger(CorpusRecord.class);
 
-    public static final String MISSING = "Missing";
+    public static final String MISSING = "0.0";
 
     private final Map<String, BigDecimal> financialsMap;
     private String classification;
@@ -48,5 +51,14 @@ public class CorpusRecord {
 
     public void setClassification(String classification) {
         this.classification = classification;
+    }
+
+    public void dumpFields() {
+        for (Map.Entry<String, BigDecimal> entry : financialsMap.entrySet()) {
+            if (entry.getValue().doubleValue() < 10.0) {
+                log.info(entry.getKey());
+            }
+        }
+
     }
 }

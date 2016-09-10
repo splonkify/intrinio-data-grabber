@@ -55,7 +55,7 @@ public class CorpusRecordBuilder {
         String plainCreds = username + ":" + password;
         base64Creds = Base64.getEncoder().encodeToString(plainCreds.getBytes());
         urlMap = new HashMap<>();
-        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?conditions=average_daily_volume~gt~9000000");
+        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?page_number=2&conditions=average_daily_volume~gt~3000000");
         urlMap.put(FundamentalsData.class.getSimpleName(), "https://api.intrinio.com/fundamentals/standardized?ticker=%s&statement=balance_sheet&type=QTR");
         urlMap.put(PriceData.class.getSimpleName(), "https://api.intrinio.com/prices?ticker=%s&frequency=weekly&start_date=%s&end_date=%s");
         urlMap.put(FinancialData.class.getSimpleName(), "https://api.intrinio.com/financials/standardized?ticker=%s&statement=%s&fiscal_year=%s&fiscal_period=%s");
@@ -65,11 +65,12 @@ public class CorpusRecordBuilder {
         ObjectMapper mapper = new ObjectMapper();
         try {
             SecurityData securityData = findData(SecurityData.class);
+            boolean fieldsDumped = false;
 //            corpusRecord.addSecurities(securityData);
             for (SecurityDatum securityDatum : securityData.getData()) {
                 CorpusRecord corpusRecord = corpusRecordProvider.get();
                 FundamentalsData fundamentalsData = findData(FundamentalsData.class, securityDatum.getTicker());
-                if (fundamentalsData.getData() != null) {
+                if (fundamentalsData != null && fundamentalsData.getData() != null) {
                     PriceParameters priceParameters = new PriceParameters(fundamentalsData);
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "balance_sheet", priceParameters.getYear(), priceParameters.getQuarter()));
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "cash_flow_statement", priceParameters.getYear(), priceParameters.getQuarter()));
@@ -80,6 +81,10 @@ public class CorpusRecordBuilder {
                         String classification = classify(priceData);
                         corpusRecord.setClassification(classification);
                         corpus.addRecord(corpusRecord);
+                        if (!fieldsDumped) {
+//                            corpusRecord.dumpFields();
+                            fieldsDumped = true;
+                        }
                     }
                 }
             }
