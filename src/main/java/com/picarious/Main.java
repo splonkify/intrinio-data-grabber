@@ -14,10 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import javax.inject.Provider;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Scanner;
+import java.io.IOException;
+import java.util.*;
 
 
 @SpringBootApplication
@@ -39,6 +37,12 @@ public class Main {
     @Value("${working.directory}")
     String workingDirectory;
 
+    @Value("${mission}")
+    String mission;
+
+    @Value("${corpus.fixedFields}")
+    String fixedFields;
+
     public static void main(String[] args) {
         SpringApplication.run(Main.class);
     }
@@ -54,29 +58,43 @@ public class Main {
             Corpus corpus = corpusProvider.get();
             corpusRecordBuilder.build(corpus);
 
-            List<String> fields = new ArrayList<>();
-            Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
-            while (scanner.hasNextLine()) {
-                fields.add(scanner.nextLine());
-            }
-            scanner.close();
-
-            for (String field : fields) {
-                Iterator<String> fieldIter = fields.iterator();
-                while (fieldIter.hasNext()) {
-                    String field2 = fieldIter.next();
-                    if (!field2.equals(field)) {
-                        corpus.setFields(field, field2);
-                        FileWriter fileWriter = new FileWriter(corpusPathAndFile);
-                        corpus.writeHeader(fileWriter);
-                        corpus.writeRecords(fileWriter);
-                        fileWriter.close();
-
-                        rAnalyzer.analyze(corpusPathAndFile, workingDirectory);
-                    }
+            if (mission.equals("BruteForceSearch")) {
+                List<String> fields = new ArrayList<>();
+                Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
+                while (scanner.hasNextLine()) {
+                    fields.add(scanner.nextLine());
                 }
+                scanner.close();
+
+//                for (String field : fields) {
+                Set<String> fixedFieldsSet = new HashSet<>();
+                fixedFieldsSet.addAll(Arrays.asList(fixedFields.split(",")));
+                    Iterator<String> fieldIter = fields.iterator();
+                    while (fieldIter.hasNext()) {
+                        String extraField = fieldIter.next();
+//                        if (!extraField.equals(field)) {
+                        if (!fixedFieldsSet.contains(extraField)) {
+                            ArrayList<String> corpusFields = new ArrayList<>();
+                            corpusFields.addAll(fixedFieldsSet);
+                            corpusFields.add(extraField);
+                            analyzeCorpus(corpus, corpusFields.toArray(new String[0]));
+                        }
+                    }
+//                }
+            } else {
+                analyzeCorpus(corpus, corpusFields.split(","));
             }
 
         };
+    }
+
+    private void analyzeCorpus(Corpus corpus, String ... fields) throws IOException {
+        corpus.setFields(fields);
+        FileWriter fileWriter = new FileWriter(corpusPathAndFile);
+        corpus.writeHeader(fileWriter);
+        corpus.writeRecords(fileWriter);
+        fileWriter.close();
+
+        rAnalyzer.analyze(corpusPathAndFile, workingDirectory);
     }
 }
