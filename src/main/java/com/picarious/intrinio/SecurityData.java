@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SecurityData {
+public class SecurityData extends Paged {
     private List<SecurityDatum> data;
 
     public List<SecurityDatum> getData() {
@@ -16,4 +16,9 @@ public class SecurityData {
         this.data = data;
     }
 
+    @Override
+    public <T extends Paged> void addPage(T pageEntity) {
+        SecurityData page = (SecurityData) pageEntity;
+        data.addAll(page.getData());
+    }
 }

@@ -16,7 +16,6 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Provider;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -55,7 +54,7 @@ public class CorpusRecordBuilder {
         String plainCreds = username + ":" + password;
         base64Creds = Base64.getEncoder().encodeToString(plainCreds.getBytes());
         urlMap = new HashMap<>();
-        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?page_number=2&conditions=average_daily_volume~gt~3000000");
+        urlMap.put(SecurityData.class.getSimpleName(), "https://api.intrinio.com/securities/search?conditions=average_daily_volume~gt~3000000");
         urlMap.put(FundamentalsData.class.getSimpleName(), "https://api.intrinio.com/fundamentals/standardized?ticker=%s&statement=balance_sheet&type=QTR");
         urlMap.put(PriceData.class.getSimpleName(), "https://api.intrinio.com/prices?ticker=%s&frequency=weekly&start_date=%s&end_date=%s");
         urlMap.put(FinancialData.class.getSimpleName(), "https://api.intrinio.com/financials/standardized?ticker=%s&statement=%s&fiscal_year=%s&fiscal_period=%s");
@@ -76,14 +75,16 @@ public class CorpusRecordBuilder {
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "cash_flow_statement", priceParameters.getYear(), priceParameters.getQuarter()));
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "income_statement", priceParameters.getYear(), priceParameters.getQuarter()));
                     corpusRecord.addFinancialData(findData(FinancialData.class, securityDatum.getTicker(), "calculations", priceParameters.getYear(), priceParameters.getQuarter()));
-                    PriceData priceData = findData(PriceData.class, securityDatum.getTicker(), priceParameters.getStart(), priceParameters.getEnd());
-                    if (priceData != null && priceData.getData() != null && !priceData.getData().isEmpty()) {
-                        String classification = classify(priceData);
-                        corpusRecord.setClassification(classification);
-                        corpus.addRecord(corpusRecord);
-                        if (!fieldsDumped) {
+                    if (priceParameters.getStart() != null && priceParameters.getEnd() != null) {
+                        PriceData priceData = findData(PriceData.class, securityDatum.getTicker(), priceParameters.getStart(), priceParameters.getEnd());
+                        if (priceData != null && priceData.getData() != null && !priceData.getData().isEmpty()) {
+                            String classification = classify(priceData);
+                            corpusRecord.setClassification(classification);
+                            corpus.addRecord(corpusRecord);
+                            if (!fieldsDumped) {
 //                            corpusRecord.dumpFields();
-                            fieldsDumped = true;
+                                fieldsDumped = true;
+                            }
                         }
                     }
                 }
@@ -104,7 +105,7 @@ public class CorpusRecordBuilder {
         });
         double firstDayOpen = priceData.getData().get(0).getOpen().doubleValue();
         double lastDayHigh = priceData.getData().get(priceData.getData().size() - 1).getHigh().doubleValue();
-        double changeRate =  (lastDayHigh - firstDayOpen) / firstDayOpen;
+        double changeRate = (lastDayHigh - firstDayOpen) / firstDayOpen;
         if (Math.abs(changeRate) > threshold) {
             if (changeRate > 0.0) {
                 classification = "P";
@@ -115,35 +116,58 @@ public class CorpusRecordBuilder {
         return classification;
     }
 
-    private <T> T findData(Class<T> clazz, String... parameters) throws IOException {
-        String urlKey = clazz.getSimpleName();
-        String fileKey = urlKey;
-        if (parameters.length > 0) {
-            StringJoiner sj = new StringJoiner("_", "", "");
-            sj.add(urlKey);
-            for (String param : parameters) {
-                sj.add(param);
+    private <T extends Paged> T findData(Class<T> clazz, String... parameters) throws IOException {
+        int current_page = 1;
+        T entity = null;
+        do {
+            String urlKey = clazz.getSimpleName();
+            String fileKey = urlKey;
+            if (current_page > 1) {
+                fileKey = fileKey + "_p" + current_page;
             }
-            fileKey = sj.toString();
-        }
-        String json = fileCache.read(fileKey);
-        if (json == null) {
-            if (!isApiAvailable) {
-                return null;
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Authorization", "Basic " + base64Creds);
-            HttpEntity<String> request = new HttpEntity<>(headers);
-            String url = urlMap.get(urlKey);
             if (parameters.length > 0) {
-                url = String.format(url, parameters);
+                StringJoiner sj = new StringJoiner("_", "", "");
+                sj.add(urlKey);
+                for (String param : parameters) {
+                    sj.add(param);
+                }
+                fileKey = sj.toString();
             }
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
-            json = response.getBody();
-            fileCache.write(fileKey, json);
+            String json = fileCache.read(fileKey);
+            if (json == null) {
+                json = getPagedDataFromServer(clazz, urlKey, current_page, parameters);
+                fileCache.write(fileKey, json);
+            }
+            ObjectMapper mapper = new ObjectMapper();
+            T pageEntity = mapper.readValue(scrubJson(json), clazz);
+            if (current_page == 1) {
+                entity = pageEntity;
+            } else {
+                entity.addPage(pageEntity);
+            }
+            current_page++;
+        } while (entity != null && entity.getCurrent_page() < entity.getTotal_pages());
+        return entity;
+    }
+
+    private <T extends Paged> String getPagedDataFromServer(Class<T> clazz, String urlKey, int page, String... parameters) throws IOException {
+        if (!isApiAvailable) {
+            return null;
         }
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(scrubJson(json), clazz);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Basic " + base64Creds);
+        HttpEntity<String> request = new HttpEntity<>(headers);
+        String url = urlMap.get(urlKey);
+        if (parameters.length > 0) {
+            url = String.format(url, parameters);
+        }
+        if (page > 1) {
+            url = url + "&page_number=" + page;
+        }
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+        String json = response.getBody();
+
+        return json;
     }
 
     private String scrubJson(String json) {

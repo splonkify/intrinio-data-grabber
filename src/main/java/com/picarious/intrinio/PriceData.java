@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PriceData {
+public class PriceData extends Paged {
     private List<PriceDatum> data;
 
     public List<PriceDatum> getData() {
@@ -14,5 +14,11 @@ public class PriceData {
 
     public void setData(List<PriceDatum> data) {
         this.data = data;
+    }
+
+    @Override
+    public <T extends Paged> void addPage(T pageEntity) {
+        PriceData page = (PriceData) pageEntity;
+        data.addAll(page.getData());
     }
 }

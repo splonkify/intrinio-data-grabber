@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FinancialData {
+public class FinancialData extends Paged {
     private List<FinancialDatum> data;
 
     public FinancialData() {
@@ -30,4 +30,9 @@ public class FinancialData {
         return data.stream().map(tagValue -> tagValue.toString()).collect(Collectors.joining(", "));
     }
 
+    @Override
+    public <T extends Paged> void addPage(T pageEntity) {
+        FinancialData page = (FinancialData) pageEntity;
+        data.addAll(page.getData());
+    }
 }
