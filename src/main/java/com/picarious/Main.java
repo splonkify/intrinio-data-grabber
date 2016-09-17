@@ -58,7 +58,7 @@ public class Main {
             Corpus corpus = corpusProvider.get();
             corpusRecordBuilder.build(corpus);
 
-            if (mission.equals("BruteForceSearch")) {
+            if (mission.equals("SeearchFirstTwo")) {
                 List<String> fields = new ArrayList<>();
                 Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
                 while (scanner.hasNextLine()) {
@@ -66,21 +66,35 @@ public class Main {
                 }
                 scanner.close();
 
-//                for (String field : fields) {
-                Set<String> fixedFieldsSet = new HashSet<>();
-                fixedFieldsSet.addAll(Arrays.asList(fixedFields.split(",")));
+                for (String field : fields) {
                     Iterator<String> fieldIter = fields.iterator();
                     while (fieldIter.hasNext()) {
                         String extraField = fieldIter.next();
-//                        if (!extraField.equals(field)) {
-                        if (!fixedFieldsSet.contains(extraField)) {
-                            ArrayList<String> corpusFields = new ArrayList<>();
-                            corpusFields.addAll(fixedFieldsSet);
-                            corpusFields.add(extraField);
-                            analyzeCorpus(corpus, corpusFields.toArray(new String[0]));
+                        if (!extraField.equals(field)) {
+                            analyzeCorpus(corpus, field, extraField);
                         }
                     }
-//                }
+                }
+            } else if (mission.equals("SearchOneNew")) {
+                List<String> fields = new ArrayList<>();
+                Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
+                while (scanner.hasNextLine()) {
+                    fields.add(scanner.nextLine());
+                }
+                scanner.close();
+
+                Set<String> fixedFieldsSet = new HashSet<>();
+                fixedFieldsSet.addAll(Arrays.asList(fixedFields.split(",")));
+                Iterator<String> fieldIter = fields.iterator();
+                while (fieldIter.hasNext()) {
+                    String extraField = fieldIter.next();
+                    if (!fixedFieldsSet.contains(extraField)) {
+                        ArrayList<String> corpusFields = new ArrayList<>();
+                        corpusFields.addAll(fixedFieldsSet);
+                        corpusFields.add(extraField);
+                        analyzeCorpus(corpus, corpusFields.toArray(new String[0]));
+                    }
+                }
             } else {
                 analyzeCorpus(corpus, corpusFields.split(","));
             }
@@ -88,7 +102,7 @@ public class Main {
         };
     }
 
-    private void analyzeCorpus(Corpus corpus, String ... fields) throws IOException {
+    private void analyzeCorpus(Corpus corpus, String... fields) throws IOException {
         corpus.setFields(fields);
         FileWriter fileWriter = new FileWriter(corpusPathAndFile);
         corpus.writeHeader(fileWriter);

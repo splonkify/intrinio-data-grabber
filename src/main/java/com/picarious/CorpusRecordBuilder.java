@@ -135,6 +135,9 @@ public class CorpusRecordBuilder {
             }
             String json = fileCache.read(fileKey);
             if (json == null) {
+                if (!isApiAvailable) {
+                    return null;
+                }
                 json = getPagedDataFromServer(clazz, urlKey, current_page, parameters);
                 fileCache.write(fileKey, json);
             }
@@ -151,9 +154,6 @@ public class CorpusRecordBuilder {
     }
 
     private <T extends Paged> String getPagedDataFromServer(Class<T> clazz, String urlKey, int page, String... parameters) throws IOException {
-        if (!isApiAvailable) {
-            return null;
-        }
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Basic " + base64Creds);
         HttpEntity<String> request = new HttpEntity<>(headers);
