@@ -10,16 +10,11 @@ import java.io.FileNotFoundException;
 
 @Service
 public class RAnalyzer {
-    public void analyze(String corpusPathAndFile, String workingDirectory) {
+    public int analyze(String corpusPathAndFile, String workingDirectory, boolean append) {
         RCaller rCaller = new RCaller();
         rCaller.setRscriptExecutable("/usr/local/bin/RScript");
         RCode rCode = rCaller.getRCode();
         rCode.addRCode("corpus <- read.csv(\"" + corpusPathAndFile + "\")");
-//        rCode.addRCode("normalize <- function(x) {");
-//        rCode.addRCode("num <- x - min(x)");
-//        rCode.addRCode("denom <- max(x) - min(x)");
-//        rCode.addRCode(" return (num/denom)");
-//        rCode.addRCode("}");
         rCode.addRCode("normalize <- function(x) {");
         rCode.addRCode("factor<-max(c(max(x), abs(min(x))))");
         rCode.addRCode("return (x/factor)");
@@ -35,18 +30,20 @@ public class RAnalyzer {
         rCode.addRCode("corpus.testLabels <- corpus_norm[ind==2, 1]");
         rCode.addRCode("corpus_pred <- knn(train = corpus.training, test = corpus.test, cl = corpus.trainLabels, k=5)");
         rCode.addRCode("corpus[0,]");
-        rCode.addRCode("cat(\"failures =\", length(which(corpus_pred != corpus.testLabels)))");
+        rCode.addRCode("failures <- length(which(corpus_pred != corpus.testLabels))");
+        rCode.addRCode("cat(\"failures =\", failures)");
         rCode.addRCode("CrossTable(x = corpus.testLabels, y = corpus_pred, prop.chisq=FALSE)");
         try {
-            rCaller.redirectROutputToFile(workingDirectory + "Routput.txt", true);
+            rCaller.redirectROutputToFile(workingDirectory + "Routput.txt", append);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         try {
-            rCaller.runOnly();
+            rCaller.runAndReturnResult("failures");
         } catch(ExecutionException e) {
             e.printStackTrace();
-
+            return Integer.MAX_VALUE;
         }
+        return rCaller.getParser().getAsIntArray("failures")[0];
     }
 }

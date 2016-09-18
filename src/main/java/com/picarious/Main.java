@@ -1,5 +1,7 @@
 package com.picarious;
 
+import com.picarious.sa.Annealer;
+import com.picarious.sa.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,12 @@ public class Main {
 
     @Autowired
     Provider<Corpus> corpusProvider;
+
+    @Autowired
+    Provider<SimpleNeighborGenerator> simpleNeighborGeneratorProvider;
+
+    @Autowired
+    Annealer annealer;
 
     @Autowired
     RAnalyzer rAnalyzer;
@@ -55,10 +63,14 @@ public class Main {
     @Bean
     public CommandLineRunner run(CorpusRecordBuilder corpusRecordBuilder) throws Exception {
         return args -> {
-            Corpus corpus = corpusProvider.get();
-            corpusRecordBuilder.build(corpus);
 
-            if (mission.equals("SeearchFirstTwo")) {
+            if (mission.equals("SearchAnneal")) {
+                SimpleNeighborGenerator simpleNeighborGenerator = simpleNeighborGeneratorProvider.get();
+                State finalState = annealer.search(simpleNeighborGenerator);
+                log.info(finalState.toString());
+            } else if (mission.equals("SearchFirstTwo")) {
+                Corpus corpus = corpusProvider.get();
+                corpusRecordBuilder.build(corpus);
                 List<String> fields = new ArrayList<>();
                 Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
                 while (scanner.hasNextLine()) {
@@ -76,6 +88,8 @@ public class Main {
                     }
                 }
             } else if (mission.equals("SearchOneNew")) {
+                Corpus corpus = corpusProvider.get();
+                corpusRecordBuilder.build(corpus);
                 List<String> fields = new ArrayList<>();
                 Scanner scanner = new Scanner(new File(workingDirectory + "fields.txt"));
                 while (scanner.hasNextLine()) {
@@ -96,6 +110,8 @@ public class Main {
                     }
                 }
             } else {
+                Corpus corpus = corpusProvider.get();
+                corpusRecordBuilder.build(corpus);
                 analyzeCorpus(corpus, corpusFields.split(","));
             }
 
@@ -109,6 +125,7 @@ public class Main {
         corpus.writeRecords(fileWriter);
         fileWriter.close();
 
-        rAnalyzer.analyze(corpusPathAndFile, workingDirectory);
+        int failures = rAnalyzer.analyze(corpusPathAndFile, workingDirectory, true);
+        log.info("failures = " + failures);
     }
 }
