@@ -31,6 +31,9 @@ public class Main {
     Provider<SimpleNeighborGenerator> simpleNeighborGeneratorProvider;
 
     @Autowired
+    Provider<RandomNeighborGenerator> randomNeighborGeneratorProvider;
+
+    @Autowired
     Annealer annealer;
 
     @Autowired
@@ -64,7 +67,12 @@ public class Main {
     public CommandLineRunner run(CorpusRecordBuilder corpusRecordBuilder) throws Exception {
         return args -> {
 
-            if (mission.equals("SearchAnneal")) {
+            if (mission.equals("SearchAnnealRandom")) {
+                RandomNeighborGenerator randomNeighborGenerator = randomNeighborGeneratorProvider.get();
+                State finalState = annealer.search(randomNeighborGenerator);
+                log.info(finalState.toString());
+                analyzeCorpus(randomNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
+            } else if (mission.equals("SearchAnnealSimple")) {
                 SimpleNeighborGenerator simpleNeighborGenerator = simpleNeighborGeneratorProvider.get();
                 State finalState = annealer.search(simpleNeighborGenerator);
                 log.info(finalState.toString());
