@@ -62,7 +62,7 @@ public class SimpleNeighborGenerator implements NeighborGenerator {
         HashSet<String> visited = new HashSet<>();
         visited.add(fields.get(0));
         visited.add(fields.get(1));
-        return new NpzState(workingDirectory, corpusPathAndFile, rAnalyzer, corpus, visited, firstFields);
+        return new NpzState(workingDirectory, corpusPathAndFile, rAnalyzer, corpus, Optional.empty(), visited, firstFields);
     }
 
     @Override
@@ -75,21 +75,35 @@ public class SimpleNeighborGenerator implements NeighborGenerator {
         String[] newFields;
         Set<String> newVisited = new HashSet<>();
         double rand = Math.random();
-        if (rand <= 0.5 && visited.size() < fields.size()) {
+        Optional<NpzState> parent;
+        if (rand <= 0.50) {
+            if (npzState.getParent().isPresent()) {
+                return newStateFrom(npzState.getParent().get());
+            } else {
+                return initialState();
+            }
+        }else if (rand <= 0.75 && visited.size() < fields.size()) {
             newFields = newSibling(previousFields, visited);
             newVisited.addAll(visited);
             newVisited.add(newFields[newFields.length - 1]);
+            parent = npzState.getParent();
         } else {
             newFields = newChild(previousFields, visited);
             newVisited.addAll(Arrays.asList(newFields));
+            parent = Optional.of(npzState);
         }
 
         return new NpzState(workingDirectory,
                 corpusPathAndFile,
                 rAnalyzer,
                 corpus,
+                parent,
                 newVisited,
                 newFields);
+    }
+
+    public Corpus getCorpus() {
+        return corpus;
     }
 
     private String[] newChild(String[] previousFields, Set<String> visited) {

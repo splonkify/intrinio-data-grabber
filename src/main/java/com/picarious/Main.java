@@ -68,6 +68,8 @@ public class Main {
                 SimpleNeighborGenerator simpleNeighborGenerator = simpleNeighborGeneratorProvider.get();
                 State finalState = annealer.search(simpleNeighborGenerator);
                 log.info(finalState.toString());
+                analyzeCorpus(simpleNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
+
             } else if (mission.equals("SearchFirstTwo")) {
                 Corpus corpus = corpusProvider.get();
                 corpusRecordBuilder.build(corpus);

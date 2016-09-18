@@ -15,21 +15,23 @@ public class NpzState implements State {
     private final String corpusPathAndFile;
     private final RAnalyzer rAnalyzer;
     private final Corpus corpus;
+    private final Optional<NpzState> parent;
     private final String[] fields;
     private final Set<String> visited;
-    private Optional<Double> energy = Optional.empty();
+    private Optional<Integer> energy = Optional.empty();
 
-    public NpzState(String workingDirectory, String corpusPathAndFile, RAnalyzer rAnalyzer, Corpus corpus, Set<String> visited, String[] fields) {
+    public NpzState(String workingDirectory, String corpusPathAndFile, RAnalyzer rAnalyzer, Corpus corpus, Optional<NpzState> parent, Set<String> visited, String[] fields) {
         this.workingDirectory = workingDirectory;
         this.corpusPathAndFile = corpusPathAndFile;
         this.rAnalyzer = rAnalyzer;
         this.corpus = corpus;
+        this.parent = parent;
         this.visited = visited;
         this.fields = fields;
     }
 
     @Override
-    public double energy() {
+    public int energy() {
         if (!energy.isPresent()) {
             corpus.setFields(fields);
             try {
@@ -39,10 +41,10 @@ public class NpzState implements State {
                 fileWriter.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                return Double.MAX_VALUE;
+                return Integer.MAX_VALUE;
             }
 
-            energy = Optional.of((double) rAnalyzer.analyze(corpusPathAndFile, workingDirectory, false));
+            energy = Optional.of(rAnalyzer.analyze(corpusPathAndFile, workingDirectory, false));
         }
         return energy.get();
     }
@@ -62,5 +64,9 @@ public class NpzState implements State {
 
     public String[] getFields() {
         return fields;
+    }
+
+    public Optional<NpzState> getParent() {
+        return parent;
     }
 }
