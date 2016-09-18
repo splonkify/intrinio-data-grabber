@@ -5,6 +5,7 @@ import com.picarious.sa.State;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
 
@@ -15,13 +16,15 @@ public class NpzState implements State {
     private final RAnalyzer rAnalyzer;
     private final Corpus corpus;
     private final String[] fields;
+    private final Set<String> visited;
     private Optional<Double> energy = Optional.empty();
 
-    public NpzState(String workingDirectory, String corpusPathAndFile, RAnalyzer rAnalyzer, Corpus corpus, String[] fields) {
+    public NpzState(String workingDirectory, String corpusPathAndFile, RAnalyzer rAnalyzer, Corpus corpus, Set<String> visited, String[] fields) {
         this.workingDirectory = workingDirectory;
         this.corpusPathAndFile = corpusPathAndFile;
         this.rAnalyzer = rAnalyzer;
         this.corpus = corpus;
+        this.visited = visited;
         this.fields = fields;
     }
 
@@ -51,6 +54,10 @@ public class NpzState implements State {
             stringJoiner.add(field);
         }
         return String.format("Failures = %s for fields: %s", energy.get(), stringJoiner.toString());
+    }
+
+    public Set<String> getVisited() {
+        return visited;
     }
 
     public String[] getFields() {

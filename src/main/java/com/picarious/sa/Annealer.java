@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class Annealer {
-    private static final int KMAX = 42;
+    private static final int KMAX = 1000;
 
     public State search(NeighborGenerator neighborGenerator) {
         State currentState = neighborGenerator.initialState();

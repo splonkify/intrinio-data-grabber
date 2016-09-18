@@ -59,52 +59,60 @@ public class SimpleNeighborGenerator implements NeighborGenerator {
         String[] firstFields = new String[2];
         firstFields[0] = fields.get(0);
         firstFields[1] = fields.get(1);
-        return new NpzState(workingDirectory, corpusPathAndFile, rAnalyzer, corpus, firstFields);
+        HashSet<String> visited = new HashSet<>();
+        visited.add(fields.get(0));
+        visited.add(fields.get(1));
+        return new NpzState(workingDirectory, corpusPathAndFile, rAnalyzer, corpus, visited, firstFields);
     }
 
     @Override
     public State newStateFrom(State currentState) {
         NpzState npzState = (NpzState) currentState;
 
+        Set<String> visited = npzState.getVisited();
+
         String[] previousFields = npzState.getFields();
         String[] newFields;
+        Set<String> newVisited = new HashSet<>();
         double rand = Math.random();
-        if (rand <= 0.5) {
-            newFields = newSibling(previousFields);
+        if (rand <= 0.5 && visited.size() < fields.size()) {
+            newFields = newSibling(previousFields, visited);
+            newVisited.addAll(visited);
+            newVisited.add(newFields[newFields.length - 1]);
         } else {
-            newFields = newChild(previousFields);
+            newFields = newChild(previousFields, visited);
+            newVisited.addAll(Arrays.asList(newFields));
         }
 
         return new NpzState(workingDirectory,
                 corpusPathAndFile,
                 rAnalyzer,
                 corpus,
+                newVisited,
                 newFields);
     }
 
-    private String[] newChild(String[] previousFields) {
-        return copyFieldsAndFindNew(previousFields, previousFields.length);
+    private String[] newChild(String[] previousFields, Set<String> visited) {
+        return copyFieldsAndFindNew(previousFields, previousFields.length, visited);
     }
 
-    private String[] newSibling(String[] previousFields) {
-        return copyFieldsAndFindNew(previousFields, previousFields.length - 1);
+    private String[] newSibling(String[] previousFields, Set<String> visited) {
+        return copyFieldsAndFindNew(previousFields, previousFields.length - 1, visited);
     }
 
-    private String[] copyFieldsAndFindNew(String[] previousFields, int numToCopy) {
-        Set<String> old = new HashSet<>();
-        String[] replacementFields = new String[previousFields.length];
+    private String[] copyFieldsAndFindNew(String[] previousFields, int numToCopy, Set<String> visited) {
+        String[] replacementFields = new String[numToCopy + 1];
         for (int i = 0; i < numToCopy; i++) {
-            old.add(previousFields[i]);
             replacementFields[i] = previousFields[i];
         }
-        ArrayList<String> unusedFields = new ArrayList<>();
+        ArrayList<String> availableFields = new ArrayList<>();
         for (String field : fields) {
-            if (!old.contains(field)) {
-                unusedFields.add(field);
+            if (!visited.contains(field)) {
+                availableFields.add(field);
             }
         }
-        Collections.shuffle(unusedFields);
-        replacementFields[replacementFields.length - 1] = unusedFields.get(0);
+        Collections.shuffle(availableFields);
+        replacementFields[replacementFields.length - 1] = availableFields.get(0);
         return replacementFields;
     }
 }
