@@ -9,6 +9,15 @@ public class FundamentalsDatum {
     private int fiscal_year;
     private String fiscal_period;
     private String filing_date;
+    private String ticker;
+
+    public String getTicker() {
+        return ticker;
+    }
+
+    public void setTicker(String ticker) {
+        this.ticker = ticker;
+    }
 
     public int getFiscal_year() {
         return fiscal_year;
@@ -32,5 +41,15 @@ public class FundamentalsDatum {
 
     public void setFiling_date(String filing_date) {
         this.filing_date = filing_date;
+    }
+
+    @Override
+    public String toString() {
+        return "FundamentalsDatum{" +
+                "ticker=" + ticker +
+                " fiscal_year=" + fiscal_year +
+                ", fiscal_period='" + fiscal_period + '\'' +
+                ", filing_date='" + filing_date + '\'' +
+                '}';
     }
 }

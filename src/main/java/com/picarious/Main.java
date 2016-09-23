@@ -1,5 +1,6 @@
 package com.picarious;
 
+import com.picarious.intrinio.FundamentalsDatum;
 import com.picarious.sa.Annealer;
 import com.picarious.sa.State;
 import org.slf4j.Logger;
@@ -38,6 +39,9 @@ public class Main {
 
     @Autowired
     RAnalyzer rAnalyzer;
+
+    @Autowired
+    RecentFilingFinder recentFilingFinder;
 
     @Value("${corpus.pathAndFile}")
     String corpusPathAndFile;
@@ -119,10 +123,16 @@ public class Main {
                         analyzeCorpus(corpus, corpusFields.toArray(new String[0]));
                     }
                 }
-            } else {
+            } else if (mission.equals("AnalyzeFields")) {
                 Corpus corpus = corpusProvider.get();
                 corpusRecordBuilder.build(corpus);
                 analyzeCorpus(corpus, corpusFields.split(","));
+            } else {
+
+                List<FundamentalsDatum> fundamentals = recentFilingFinder.findFundamentalsOrderedByFilingDate();
+                for (int i = 0; i < 10; i++) {
+                    log.info(fundamentals.get(i).toString());
+                }
             }
 
         };
