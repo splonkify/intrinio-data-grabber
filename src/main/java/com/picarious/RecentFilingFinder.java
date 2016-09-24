@@ -1,14 +1,14 @@
 package com.picarious;
 
-import com.picarious.intrinio.FundamentalsData;
-import com.picarious.intrinio.FundamentalsDatum;
-import com.picarious.intrinio.SecurityData;
-import com.picarious.intrinio.SecurityDatum;
+import com.picarious.intrinio.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,17 +22,21 @@ public class RecentFilingFinder {
     }
 
     public List<FundamentalsDatum> findFundamentalsOrderedByFilingDate() {
-        List<FundamentalsDatum> fundamentals = new ArrayList<>();
-        SecurityData securityData = repository.findData(SecurityData.class);
+        Map<String, FundamentalsDatum> fundamentals = new HashMap<>();
+        SecurityData securityData = repository.findData(false, SecurityData.class);
         for (SecurityDatum securityDatum : securityData.getData()) {
-            FundamentalsData fundamentalsData = repository.findData(FundamentalsData.class, securityDatum.getTicker());
+            FundamentalsData fundamentalsData = repository.findData(true, FundamentalsData.class, securityDatum.getTicker());
             if (fundamentalsData != null && fundamentalsData.getData() != null) {
-                fundamentals.addAll(fundamentalsData.getData().stream().map(f -> {f.setTicker(securityDatum.getTicker()); return f;}).collect(Collectors.toList()));
+                fundamentals.putAll(fundamentalsData.getData().stream()
+                        .filter(f -> f.getFiscal_period().startsWith("Q"))
+                        .map(f -> {f.setTicker(securityDatum.getTicker()); return f;})
+                        .collect(Collectors.toMap(FundamentalsDatum::getTicker, d -> d, (d1, d2) -> d1)));
             }
         }
 
         // descending sort
-        fundamentals.sort((o1, o2) -> o2.getFiling_date().compareTo(o1.getFiling_date()));
-        return fundamentals;
+        List<FundamentalsDatum> sortedFundamentals = new ArrayList<>(fundamentals.values());
+        sortedFundamentals.sort((o1, o2) -> o2.getFiling_date().compareTo(o1.getFiling_date()));
+        return sortedFundamentals;
     }
 }

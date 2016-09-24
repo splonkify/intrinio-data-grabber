@@ -51,7 +51,7 @@ public class Repository {
         urlMap.put(FinancialData.class.getSimpleName(), "https://api.intrinio.com/financials/standardized?ticker=%s&statement=%s&fiscal_year=%s&fiscal_period=%s");
     }
 
-    public <T extends Paged> T findData(Class<T> clazz, String... parameters) {
+    public <T extends Paged> T findData(boolean refreshCache, Class<T> clazz, String... parameters) {
         int current_page = 1;
         T entity = null;
         do {
@@ -68,7 +68,12 @@ public class Repository {
                 }
                 fileKey = sj.toString();
             }
-            String json = fileCache.read(fileKey);
+            String json = null;
+            if (refreshCache && isApiAvailable) {
+                fileCache.clear(fileKey);
+            } else {
+                json = fileCache.read(fileKey);
+            }
             if (json == null) {
                 if (!isApiAvailable) {
                     return null;

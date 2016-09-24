@@ -41,10 +41,16 @@ public class Main {
     RAnalyzer rAnalyzer;
 
     @Autowired
+    RClassifier rClassifier;
+
+    @Autowired
     RecentFilingFinder recentFilingFinder;
 
     @Value("${corpus.pathAndFile}")
     String corpusPathAndFile;
+
+    @Value("${corpus.test.pathAndFile}")
+    String corpusTestPathAndFile;
 
     @Value("${corpus.fields}")
     String corpusFields;
@@ -75,12 +81,12 @@ public class Main {
                 RandomNeighborGenerator randomNeighborGenerator = randomNeighborGeneratorProvider.get();
                 State finalState = annealer.search(randomNeighborGenerator);
                 log.info(finalState.toString());
-                analyzeCorpus(randomNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
+                saveAndAnalyze(randomNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
             } else if (mission.equals("SearchAnnealSimple")) {
                 SimpleNeighborGenerator simpleNeighborGenerator = simpleNeighborGeneratorProvider.get();
                 State finalState = annealer.search(simpleNeighborGenerator);
                 log.info(finalState.toString());
-                analyzeCorpus(simpleNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
+                saveAndAnalyze(simpleNeighborGenerator.getCorpus(), ((NpzState) finalState).getFields());
 
             } else if (mission.equals("SearchFirstTwo")) {
                 Corpus corpus = corpusProvider.get();
@@ -97,7 +103,7 @@ public class Main {
                     while (fieldIter.hasNext()) {
                         String extraField = fieldIter.next();
                         if (!extraField.equals(field)) {
-                            analyzeCorpus(corpus, field, extraField);
+                            saveAndAnalyze(corpus, field, extraField);
                         }
                     }
                 }
@@ -120,32 +126,46 @@ public class Main {
                         ArrayList<String> corpusFields = new ArrayList<>();
                         corpusFields.addAll(fixedFieldsSet);
                         corpusFields.add(extraField);
-                        analyzeCorpus(corpus, corpusFields.toArray(new String[0]));
+                        saveAndAnalyze(corpus, corpusFields.toArray(new String[0]));
                     }
                 }
             } else if (mission.equals("AnalyzeFields")) {
                 Corpus corpus = corpusProvider.get();
                 corpusRecordBuilder.build(corpus);
-                analyzeCorpus(corpus, corpusFields.split(","));
+                saveAndAnalyze(corpus, corpusFields.split(","));
             } else {
+                Corpus training = corpusProvider.get();
+                corpusRecordBuilder.build(training);
+                saveCorpus(corpusPathAndFile, training, corpusFields.split(","));
 
+                Corpus testing = corpusProvider.get();
+                testing.setClassified(false);
                 List<FundamentalsDatum> fundamentals = recentFilingFinder.findFundamentalsOrderedByFilingDate();
                 for (int i = 0; i < 10; i++) {
-                    log.info(fundamentals.get(i).toString());
+                    FundamentalsDatum fd = fundamentals.get(i);
+                    log.info(fd.toString());
+                    corpusRecordBuilder.addRecord(testing, fd.getTicker(), fd);
                 }
+                saveCorpus(corpusTestPathAndFile, testing, corpusFields.split(","));
+
+                rClassifier.classify(corpusPathAndFile, corpusTestPathAndFile, workingDirectory, false);
             }
 
         };
     }
 
-    private void analyzeCorpus(Corpus corpus, String... fields) throws IOException {
-        corpus.setFields(fields);
-        FileWriter fileWriter = new FileWriter(corpusPathAndFile);
-        corpus.writeHeader(fileWriter);
-        corpus.writeRecords(fileWriter);
-        fileWriter.close();
+    private void saveAndAnalyze(Corpus corpus, String... fields) throws IOException {
+        saveCorpus(corpusPathAndFile, corpus, fields);
 
         int failures = rAnalyzer.analyze(corpusPathAndFile, workingDirectory, true);
         log.info("failures = " + failures);
+    }
+
+    private void saveCorpus(String path, Corpus corpus, String[] fields) throws IOException {
+        corpus.setFields(fields);
+        FileWriter fileWriter = new FileWriter(path);
+        corpus.writeHeader(fileWriter);
+        corpus.writeRecords(fileWriter);
+        fileWriter.close();
     }
 }

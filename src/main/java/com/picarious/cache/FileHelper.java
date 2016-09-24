@@ -3,9 +3,17 @@ package com.picarious.cache;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.file.Files;
 
 @Service
 public class FileHelper {
+    public void deleteFile(String cacheRoot, String key, String suffix) {
+        String filePath = makeFilePath(cacheRoot, key, suffix);
+        File file = new File(filePath);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
     public FileReader openFile(String cacheRoot, String key, String suffix) {
         String filePath = makeFilePath(cacheRoot, key, suffix);
         try {

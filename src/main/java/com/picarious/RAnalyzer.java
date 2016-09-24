@@ -34,7 +34,7 @@ public class RAnalyzer {
         rCode.addRCode("cat(\"failures =\", failures)");
         rCode.addRCode("CrossTable(x = corpus.testLabels, y = corpus_pred, prop.chisq=FALSE)");
         try {
-            rCaller.redirectROutputToFile(workingDirectory + "Routput.txt", append);
+            rCaller.redirectROutputToFile(workingDirectory + "RAnalyzer.txt", append);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

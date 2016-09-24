@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.RunnableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,6 +18,7 @@ public class Corpus {
     static final String NO_RECORDS_FOUND = "No records found";
     private List<String> fields;
     private final List<CorpusRecord> records;
+    private boolean classified = true;
 
     public Corpus() {
         fields = new ArrayList<>();
@@ -27,6 +27,14 @@ public class Corpus {
 
     public void setFields(String... newFields) {
         fields = Arrays.stream(newFields).collect(Collectors.toList());
+    }
+
+    public boolean isClassified() {
+        return classified;
+    }
+
+    public void setClassified(boolean classified) {
+        this.classified = classified;
     }
 
     public Stream<String> fieldStream() {
@@ -39,7 +47,10 @@ public class Corpus {
         }
         String header = fieldStream().collect(Collectors.joining(",")) + "\n";
         try {
-            writer.write("classification," + header);
+            if (classified) {
+                writer.write("classification,");
+            }
+            writer.write(header);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -55,7 +66,10 @@ public class Corpus {
         records.stream().forEach(
                 corpusRecord -> {
                     try {
-                        writer.write(corpusRecord.getClassification() + "," + fieldStream().map(field -> corpusRecord.getValue(field)).collect(Collectors.joining(",")) + "\n");
+                        if (classified) {
+                            writer.write(corpusRecord.getClassification() + ",");
+                        }
+                        writer.write(fieldStream().map(field -> corpusRecord.getValue(field)).collect(Collectors.joining(",")) + "\n");
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

@@ -22,6 +22,10 @@ public class FileCache {
         this.fileHelper = fileHelper;
     }
 
+    public void clear(String key) {
+        fileHelper.deleteFile(cacheRoot, key, suffix);
+    }
+
     public String read(String key) {
         FileReader fileReader = fileHelper.openFile(cacheRoot, key, suffix);
         if (fileReader == null) {
